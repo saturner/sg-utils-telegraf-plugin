@@ -23,7 +23,4 @@ go.work.sum
 
 # env file
 .env
-/.idea/.gitignore
-/.idea/modules.xml
-/.idea/sg-utils-telegraf-plugin.iml
-/.idea/vcs.xml
+/.idea/*
