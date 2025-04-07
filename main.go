@@ -1,39 +1,29 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
 func main() {
 	// Run sg_ses with simulated input
-	cmd := exec.Command("sg_ses", "--status", "--inhex=ses_areca_all.hex", "--page=ec")
+	cmd := exec.Command("sg_ses", "--status", "--inhex=ses_areca_all.hex", "--index=vs,1", "--get=Voltage")
 
-	stdout, err := cmd.StdoutPipe()
+	out, err := cmd.Output()
 	if err != nil {
-		fmt.Println("Error creating pipe:", err)
-		os.Exit(1)
+		fmt.Println(err)
 	}
-	if err := cmd.Start(); err != nil {
-		fmt.Println("Error starting command:", err)
-		os.Exit(1)
-	}
-
-	scanner := bufio.NewScanner(stdout)
-	var volts string
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "Voltage") && strings.Contains(line, "volts") {
-			fields := strings.Fields(line)
-			volts = fields[1]
-		}
-	}
+	buf := bytes.NewBuffer(out)
+	voltsString := buf.String()
+	// Sanitze and Math here
+	mVolts := strings.TrimSpace(voltsString)
+	volts, _ := strconv.ParseFloat(mVolts, 64)
+	volts = volts / 100
 
 	// Output in Influx line protocol
-	fmt.Printf("voltage_sensor,sensor_id=1 voltage=%s\n", volts)
+	fmt.Printf("voltage_sensor,sensor_id=1 voltage=%.2f\n", volts)
 
 }
